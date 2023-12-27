@@ -50,7 +50,6 @@
     <link rel="icon" type="image/png" sizes="16x16"
         href="<?php echo base_url(); ?>assets/images/favicon/favicon-16x16.png">
     <link rel="manifest" href="<?php echo base_url(); ?>assets/images/favicon/manifest.json">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-KyZXEAg3QhqLMpG8r+Knujsl5+z0I5t9z1/i6pZZ3iF7pW1Vv1CT6RSp63aVT2D1yRiK5STcYQaXU+qjnM5fLg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">

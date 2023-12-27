@@ -105,6 +105,12 @@
                     <span class="m-menu__link-text">Forum</span>
                 </a>
             </li>
+            <li class="m-menu__item <?= (current_url() === base_url('election')) ? 'm-menu__item--active' : '' ?>">
+                <a href="<?= base_url('election') ?>" class="m-menu__link nav-link">
+                    <i class="m-menu__link-icon fa fa-codepen"></i>
+                    <span class="m-menu__link-text">Election</span>
+                </a>
+            </li>
         </ul>
     </div>
 </div>

@@ -341,10 +341,50 @@ class General_model extends CI_Model
 
         return $data->result();
     }
-		// sample 
+		// sample  chart
 	public function getChartData() {
 			// Your MySQL query to fetch data
 		$query = $this->db->query("SELECT category, value FROM chart_data");
 		return $query->result_array();
 	}
+	//get forum
+    public function get_forum_data($limit, $offset, $where_forum = "") {
+        $this->db->select('id_forum, title_forum, desc_forum, datetime_post, published_by, publisher_role, id_admin, id_ho');
+        $this->db->from('tbl_forum');
+    
+        if (!empty($where_forum)) {
+            $this->db->where($where_forum);
+        }
+    
+        $this->db->order_by('datetime_post', 'desc');
+        $this->db->limit($limit, $offset);
+    
+        $query = $this->db->get();
+        return $query->result();
+    }
+    
+    public function get_total_forums() {
+        return $this->db->count_all_results('tbl_forum');
+    }
+	public function get_forum_replies($forum_id, $limit, $offset) {
+		$this->db->select('id_forum_rep, forum_rep, reference, id_forum, id_admin, id_ho, commented_by, datetime_rep');
+		$this->db->from('tbl_forum_replies');
+		$this->db->where('id_forum', $forum_id);
+		$this->db->where('reference', 0); // Add this line to filter by reference = 0
+		$this->db->order_by('datetime_rep','desc'); // Remove 'desc' to get the latest records
+		$this->db->limit($limit, $offset);
+	
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_forum_sub_comments($forum_rep_id) {
+        $this->db->select('id_forum_rep, forum_rep, reference, id_forum, id_admin, id_ho, commented_by, datetime_rep');
+        $this->db->from('tbl_forum_replies');
+        $this->db->where('reference', $forum_rep_id);
+        $this->db->order_by('datetime_rep', 'desc');
+        // $this->db->limit($limit, $offset);
+
+        $query = $this->db->get();
+        return $query->result();
+    }
 }
