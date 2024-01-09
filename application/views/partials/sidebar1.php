@@ -47,13 +47,14 @@
 <div id="m_aside_left" class="m-grid__item	m-aside-left  m-aside-left--skin-light sidebarDark" style="background: white;">
     <div id="m_ver_menu" class="m-aside-menu  m-aside-menu--skin-light m-aside-menu--submenu-skin-light " data-menu-vertical="true" data-menu-scrollable="true" data-menu-dropdown-timeout="500" style="position: fixed;width: inherit;">
         <ul class="m-menu__nav  m-menu__nav--dropdown-submenu-arrow" id="side_menu">
-            <li id="" style="" class="m-menu__item <?= (current_url() === base_url('dashboard')) ? 'm-menu__item--active' : '' ?>">
-                <a href="<?= base_url('dashboard') ?>" class="m-menu__link">
-                    <i class="m-menu__link-icon la la-dashcube "></i>
-                    <span class="m-menu__link-text">Dashboard</span>
-                </a>
-            </li>
+
             <?php foreach ($menu as $key => $value) { ?>
+                <li id="" style="" class="m-menu__item <?= (current_url() === base_url('dashboard')) ? 'm-menu__item--active' : '' ?>">
+                    <a href="<?= base_url('dashboard') ?>" class="m-menu__link">
+                        <i class="m-menu__link-icon la la-dashcube "></i>
+                        <span class="m-menu__link-text">Dashboard</span>
+                    </a>
+                </li>
                 <li class="m-menu__item <?= (current_url() === base_url('admin')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
                     <a href="<?= base_url('admin') ?>" class="m-menu__link "><i class="m-menu__link-icon <?php echo $value->icon; ?>"></i>
                         <span class="m-menu__link-title">
@@ -96,31 +97,24 @@
                     <span class="m-menu__link-text">Forum</span>
                 </a>
             </li>
-            <li class="m-menu__item <?= (current_url() === base_url('election')) ? 'm-menu__item--submenu m-menu__item--open m-menu__item--expanded' : '' ?>" aria-haspopup="true">
+            <li class="m-menu__item <?php (current_url() === base_url('election')) ? 'm-menu__item--submenu m-menu__item--open m-menu__item--expanded ' : '' ?>" aria-haspopup="true">
                 <a href="#" class="m-menu__link m-menu__toggle"><i class="m-menu__link-icon fa fa-codepen"></i><span class="m-menu__link-text">Election</span><i class="m-menu__ver-arrow la la-angle-right"></i></a>
                 <div class="m-menu__submenu "><span class="m-menu__arrow"></span>
                     <ul class="m-menu__subnav">
-                        <li class="m-menu__item <?= (current_url() === base_url('election')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
+                        <li class="m-menu__item <?php (current_url() === base_url('election')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
                             <a href="<?= base_url('election') ?>" class="m-menu__link "><i class="m-menu__link-bullet m-menu__link-bullet--dot"><span></span></i><span class="m-menu__link-text">Election Dashboard</span>
                             </a>
                         </li>
-                        <li class="m-menu__item <?= (current_url() === base_url('election/manage_election')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
+                        <li class="m-menu__item <?php (current_url() === base_url('election/manage_election')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
                             <a href="<?= base_url('election/manage_election') ?>" class="m-menu__link "><i class="m-menu__link-bullet m-menu__link-bullet--dot"><span></span></i><span class="m-menu__link-text">Manage Election</span>
                             </a>
                         </li>
-                        <li class="m-menu__item <?= (current_url() === base_url('election/manage_position')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
+                        <li class="m-menu__item <?php (current_url() === base_url('election/manage_position')) ? 'm-menu__item--active' : '' ?>" aria-haspopup="true">
                             <a href="<?= base_url('election/manage_position') ?>" class="m-menu__link "><i class="m-menu__link-bullet m-menu__link-bullet--dot"><span></span></i><span class="m-menu__link-text">Manage Position</span>
                             </a>
                         </li>
                     </ul>
                 </div>
-            </li>
-
-            <li class="m-menu__item <?= (current_url() === base_url('activity')) ? 'm-menu__item--active' : '' ?>">
-                <a href="<?= base_url('activity') ?>" class="m-menu__link">
-                    <i class="m-menu__link-icon fa fa-asterisk"></i>
-                    <span class="m-menu__link-text">Activity Logs</span>
-                </a>
             </li>
         </ul>
     </div>

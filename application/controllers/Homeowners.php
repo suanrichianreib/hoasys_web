@@ -83,6 +83,7 @@ class Homeowners extends General
     public function save_homeowner()
     {
         $em = $this->input->post('email_address');
+        $admin_name = $this->session->userdata("fullname");
 		$pass = $this->generate_password();
 		$un = $this->input->post('username');
 		$fullname = $this->input->post('fname')." ".$this->input->post('lname');
@@ -104,7 +105,9 @@ class Homeowners extends General
         $payment['monthly'] =$this->input->post('payment');
         $payment['id_ho'] = $newinserted_id;
         $payment['duedate'] = $this->input->post('duedate');
-        $this->general_model->insert_vals($payment, "tbl_homeowner_monthly");
+        $id_ho_inserted = $this->general_model->insert_vals_last_inserted_id($payment, "tbl_homeowner_monthly");
+        $message = $admin_name.' successfully added '.$fullname.' as a Homeowner.';
+        $this->activity_log('homeowner', $id_ho_inserted,$message);
         $data['success'] = 1;
         echo json_encode($data);
         $this->email_sending($newinserted_id,$em,$pass,$un,$fullname);
@@ -445,6 +448,7 @@ class Homeowners extends General
     }
     public function update_homeowner(){
         $id = $this->input->post('id');
+        $admin_name = $this->session->userdata("fullname");
         $home['fname'] = $this->input->post('fname');
         $home['lname'] = $this->input->post('lname');
         $home['mname'] = $this->input->post('mname');
@@ -462,10 +466,98 @@ class Homeowners extends General
         $pay['updated_by'] = $this->session->userdata("id_admin");
         $this->general_model->update_vals($home, "id_ho = $id", "tbl_homeowner");
         $this->general_model->update_vals($pay, "id_ho = $id", "tbl_homeowner_monthly");
+        $message = $admin_name.' successfully updated info of homeowner '.$this->input->post('fname').' '.$this->input->post('lname').'.';
+        $this->activity_log('homeowner', $id,$message);
     }
 	public function generate_password() {
         $this->load->helper('string');
         $password = random_string('alnum', 5);
         return $password;
+    }
+    public function download_homeowners_report()
+    {
+        $homeowners = $this->general_model->custom_query('SELECT * FROM `tbl_homeowner`');
+
+        $all_ho = $this->general_model->custom_query('SELECT COUNT(id_ho) as homeowner_all FROM `tbl_homeowner`');
+        $all_ho_active = $this->general_model->custom_query('SELECT COUNT(id_ho) as homeowner_all FROM `tbl_homeowner`WHERE status = "active"');
+        $all_ho_inactive = $this->general_model->custom_query('SELECT COUNT(id_ho) as homeowner_all FROM `tbl_homeowner`WHERE status = "inactive"');
+
+        $this->load->library('PHPExcel', null, 'excel');
+        // for ($sheet_loop = 0; $sheet_loop < 1; $sheet_loop++) {
+            // $this->excel->createSheet(1);
+        // }
+
+        // ----------------------------------- Homeowners
+        $this->excel->setActiveSheetIndex(0);
+        $this->excel->getActiveSheet()->setTitle('Homeowners');
+        $this->excel->getActiveSheet()->setShowGridlines(false);
+        $header_condition = [
+            ['col' => 'A', 'id' => 'A7', 'title' => 'LAST NAME', 'width' => 30, 'data_id' => 'lname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'B', 'id' => 'B7', 'title' => 'FIRST NAME', 'width' => 30, 'data_id' => 'fname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'C', 'id' => 'C7', 'title' => 'MIDDLE NAME', 'width' => 20, 'data_id' => 'mname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER],
+            ['col' => 'D', 'id' => 'D7', 'title' => 'BLOCK', 'width' => 20, 'data_id' => 'block', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER],
+            ['col' => 'E', 'id' => 'E7', 'title' => 'LOT', 'width' => 20, 'data_id' => 'lot', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'F', 'id' => 'F7', 'title' => 'VILLAGE', 'width' => 20, 'data_id' => 'village', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'G', 'id' => 'G7', 'title' => 'CONTACT NUM', 'width' => 20, 'data_id' => 'contact_num', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'H', 'id' => 'H7', 'title' => 'EMAIL', 'width' => 50, 'data_id' => 'email_add', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'I', 'id' => 'I7', 'title' => 'STATUS', 'width' => 20, 'data_id' => 'status', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+
+        ];
+        $this->excel->getActiveSheet()->setCellValue('B2', "HOASYS HOMEOWNER MEMBERS");
+        $this->excel->getActiveSheet()->setCellValue('B3', "TOTAL HOMEOWNERS: " . $all_ho[0]->homeowner_all);
+        $this->excel->getActiveSheet()->setCellValue('B4', "TOTAL ACTIVE HOMEOWNERS: " .$all_ho_active[0]->homeowner_all);
+        $this->excel->getActiveSheet()->setCellValue('B5', "TOTAL INACTIVE HOMEOWNERS: " . $all_ho_inactive[0]->homeowner_all);
+        $this->excel->getActiveSheet()->getStyle('B2:B2')->getFont()->setSize(20);
+        // var_dump($header_condition);
+        // exit();
+        for ($excel_data_header_loop = 0; $excel_data_header_loop < count($header_condition); $excel_data_header_loop++) {
+            $this->excel->getActiveSheet()->setCellValue($header_condition[$excel_data_header_loop]['id'], $header_condition[$excel_data_header_loop]['title']);
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFont()->setBold(true);
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFont()->getColor()->setRGB('FFFFFF');
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+            if ($header_condition[$excel_data_header_loop]['id'] != "D2") {
+                $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('404040');
+            }
+            if ($header_condition[$excel_data_header_loop]['width'] > 0) {
+                $this->excel->getActiveSheet()->getColumnDimension($header_condition[$excel_data_header_loop]['col'])->setWidth($header_condition[$excel_data_header_loop]['width']);
+            }
+        }
+        $this->excel->getActiveSheet()->getStyle('D2:D2')->getFont()->setSize(20);
+        $this->excel->getActiveSheet()->getStyle('D2:D3')->getFont()->getColor()->setRGB('000000');
+        // $this->excel->getActiveSheet()->freezePane('E6');
+        $rowNum = 8;
+        $last_row = (count($homeowners) + $rowNum) - 1;
+        if (count($homeowners) > 0) {
+            foreach ($homeowners as $condition_rows) {
+                for ($loop_header = 0; $loop_header < count($header_condition); $loop_header++) {
+                    $this->excel->getActiveSheet()->setCellValue($header_condition[$loop_header]['col'] . $rowNum, $condition_rows->{$header_condition[$loop_header]['data_id']});
+                    $this->excel->getActiveSheet()->getStyle($header_condition[$loop_header]['col'] . $rowNum . ":" . $header_condition[$loop_header]['col'] . $rowNum)->getAlignment()->setHorizontal($header_condition[$loop_header]['position']);
+                }
+                $rowNum++;
+            }
+        }
+        $this->excel->getActiveSheet()->getStyle('A7:I7' . $this->excel->getActiveSheet()->getHighestRow())->applyFromArray(
+            array(
+                'borders' => array(
+                    'allborders' => array(
+                        'style' => PHPExcel_Style_Border::BORDER_THIN,
+                        'color' => array('rgb' => 'DDDDDD'),
+                    ),
+                ),
+            )
+        );
+
+        $this->excel->getActiveSheet()->getProtection()->setPassword('password hoa_sys');
+        $this->excel->getActiveSheet()->getProtection()->setSheet(true);
+        $dateTime = $this->get_current_date_time();
+        $filename = 'HOASYS_REPORT' . $dateTime['dateTime'] . '.xlsx'; //save our workbook as this file name
+        header('Content-Type: application/vnd.ms-excel'); //mime type
+        header('Content-Disposition: attachment;filename="' . $filename . '"'); //tell browser what's the file name
+        header('Cache-Control: max-age=0'); //no cache
+        // header('Set-Cookie: fileDownload=true; path=/');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        ob_end_clean();
+        $objWriter->save('php://output');
+        // Yes export 
     }
 }

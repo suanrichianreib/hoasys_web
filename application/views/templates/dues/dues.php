@@ -92,7 +92,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="col-xl-4 text-left">
+                                <div class="col-4 text-left">
                                     <div class="form-group">
                                         <select class="form-control " name="status_pay" id="status_pay"
                                             style="width: 100%;">
@@ -102,28 +102,34 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-xl-4">
+                                <div class="col-3">
                                     <div class="form-group">
                                         <select class="form-control m-select2" name="month_select_choose"
                                             id="month_select_choose" style="width: 100%;">
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-xl-4">
+                                <div class="col-3">
                                     <div class="form-group">
                                         <select class="form-control m-select2" name="year_select_choose"
                                             id="year_select_choose" style="width: 100%;">
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-xl-4" style="text-align:end">
+                                <div class="col-5" style="text-align:end">
                                     <a id="create_billing_btn" href="#"
-                                        class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill add_committee">
+                                        class="btn btn-primary m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill add_committee">
                                         <span>
-                                            <i class="la la-plus"></i>
-                                            <span>Create Billing</span>
+                                            <i class="la la-cog"></i>
+                                            <span>Billing Settings</span>
                                         </span>
                                     </a>
+                                </div>
+                                <div class="col-1" style="text-align:center">
+                                    <button type="button" id="download_dues_report"
+                                        class="btn btn-success m-btn m-btn--icon btn-lg m-btn--icon-only">
+                                        <i class="fa fa-download"></i>
+                                    </button>
                                 </div>
 
                             </div>
@@ -560,12 +566,12 @@
                         <div class="col-xl-12">
                             <label class="pay_label" style="color:red !important;">PENALTY: </label>&nbsp;&nbsp;<span
                                 id="details_penalty">
-                                 </span>
+                            </span>
                         </div>
                         <div class="col-xl-12">
                             <label class="pay_label">DATE PAID/UPDATED: </label>&nbsp;&nbsp;<span
                                 id="details_date_updated">
-                                 </span>
+                            </span>
                         </div>
 
                     </div>
@@ -586,6 +592,8 @@
                                 Paid</button>
                             <button type="button" class="btn btn-warning" id="revert_to_pending"
                                 style="display:none">Revert to Pending</button>
+                            <button type="button" class="btn btn-info" id="send_billing_btn" style="display:none">Send
+                                Billing</button>
                         </div>
                     </div>
                 </div>

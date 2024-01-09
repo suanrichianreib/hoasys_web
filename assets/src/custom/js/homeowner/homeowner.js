@@ -280,3 +280,50 @@ $("#submit_homeowner_update").on("submit", (e) => {
 		},
 	});
 });
+$("#download_homeowners_report").on("click", function () {
+	var todate = moment().format("DD-MM-YYYY HH:mm:ss");
+		$.ajax({
+			url: `${base_url}/homeowners/download_homeowners_report`,
+			method: "POST",
+			// data: {
+			// 	month,
+			// 	year
+			// },
+			beforeSend: function () {
+				mApp.block("body", {
+					overlayColor: "#000000",
+					type: "loader",
+					state: "brand",
+					size: "lg",
+					message: "Downloading...",
+				});
+			},
+			xhrFields: {
+				responseType: "blob",
+			},
+			success: function (data) {
+				console.log(data);
+				var a = document.createElement("a");
+				var url = window.URL.createObjectURL(data);
+				a.href = url;
+				a.download = "Hoasys-homeowners-members-" + todate + ".xlsx";
+				a.click();
+				window.URL.revokeObjectURL(url);
+				mApp.unblock("body");
+			},
+			error: function (data) {
+				$.notify(
+					{
+						message: "No record to export / Error in exporting excel",
+					},
+					{
+						type: "danger",
+						timer: 1000,
+					}
+				);
+				mApp.unblock("body");
+			},
+		});
+	
+
+});

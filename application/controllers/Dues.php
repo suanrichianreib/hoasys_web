@@ -414,25 +414,226 @@ class Dues extends General
         $details = $this->general_model->custom_query("SELECT h.*,r.*, CONCAT(h.fname,' ', h.mname, ' ', h.lname) as fullname FROM tbl_records r, tbl_homeowner h WHERE h.id_ho = r.id_ho AND h.id_ho = $id AND r.id_record = $id_rec");
         echo json_encode($details);
     }
-    public function update_record_status(){
+    public function update_record_status()
+    {
         $date_time = $this->get_current_date_time();
         $id_rec = $this->input->post('record_id');
         $stat = $this->input->post('status');
         $records['status_record'] =  $stat;
         $records['date_updated'] =  $date_time["dateTime"];
         $this->general_model->update_vals($records, "id_record = $id_rec", "tbl_records");
+
+        $admin_name = $this->session->userdata("fullname");
+        $ho_records = $this->get_records_for_logs($id_rec);
+        $message = $admin_name . ' changed dues status of ' . $ho_records[0]->fullname . ' to ' . $stat . ' for ' . $ho_records[0]->month_record . ' ' . $ho_records[0]->year_record . ' dues.';
+        $this->activity_log('dues', $id_rec, $message);
     }
-    public function update_penalty(){
+    public function update_penalty()
+    {
         $id_rec = $this->input->post('record_id');
         $penalty = $this->input->post('penalty');
-        if($penalty == "0" || $penalty == "0" || $penalty == ""){
+        if ($penalty == "0" || $penalty == "") {
             $penalty == null;
         }
         $records['penalty'] =  $penalty;
         $this->general_model->update_vals($records, "id_record = $id_rec", "tbl_records");
+
+        $admin_name = $this->session->userdata("fullname");
+        $penalty_records = $this->get_records_for_logs($id_rec);
+        $message = $admin_name . ' added penalty of ' . $penalty . ' to homeowner' . $penalty_records[0]->fullname . ' for ' . $penalty_records[0]->month_record . ' ' . $penalty_records[0]->year_record . ' dues.';
+        $this->activity_log('dues', $id_rec, $message);
     }
-    public function delete_record(){
+    public function delete_record()
+    {
         $id_rec = $this->input->post('record_id');
+        $admin_name = $this->session->userdata("fullname");
+        $penalty_records = $this->get_records_for_logs($id_rec);
+        $message = $admin_name . ' removed/deleted  due record of ' . $penalty_records[0]->fullname . ' for ' . $penalty_records[0]->month_record . ' ' . $penalty_records[0]->year_record . '.';
+        $this->activity_log('dues', $id_rec, $message);
         $this->general_model->delete_vals("id_record = $id_rec", "tbl_records");
+    }
+    public function send_billing_dues()
+    {
+        $record_id = $this->input->post('record_id');
+        $ho_id = $this->input->post('ho_id');
+        $billing_info = $this->general_model->custom_query("SELECT h.*,r.*, CONCAT(h.fname,' ', h.mname, ' ', h.lname) as fullname, h.email_add FROM tbl_records r, tbl_homeowner h WHERE h.id_ho = r.id_ho AND r.id_record =" . $record_id . " AND r.id_ho = " . $ho_id . " ");
+        $subject = $billing_info[0]->fullname . " | Billing for " . $billing_info[0]->month_record . " " . $billing_info[0]->year_record . ".";
+        $month_year = $billing_info[0]->month_record . " " . $billing_info[0]->year_record;
+        $fullname = $billing_info[0]->fullname;
+        $paid_amount = $billing_info[0]->paid_amount;
+        $penalty = 0;
+        $total = $paid_amount;
+        if ($billing_info[0]->penalty != null) {
+            $penalty = $billing_info[0]->penalty;
+            $total = $paid_amount + $penalty;
+        }
+        $email = "Hi $fullname,<br><br>
+
+        As part of our ongoing commitment to transparency and effective communication, we are pleased to provide you with your monthly billing statement for $month_year.<br><br>
+
+        Below, you will find a detailed breakdown of your charges: <br><br>
+
+        MONTHLY PAYMENT = $paid_amount<br>
+        PENALTY =  $penalty <br>
+        TOTAL PAYMENT = $total <br><br>
+
+        If you have any questions or need assistance, feel free to contact the homeowners' association by sending concern through the website or by replying this email.<br><br>
+
+        Best regards,<br>
+        Hoasys Admin
+    ";
+
+
+        $this->email_sending_billing($billing_info[0]->email_add, $subject, $email);
+    }
+    public function download_dues_report()
+    {
+        $month = $this->input->post('month');
+        $year = $this->input->post('year');
+        $status = $this->input->post('status');
+        $status_where = "";
+
+        if ($status != "All" && $status != " " && $status != null) {
+            $status_where = ' AND r.status_record = "' . $status . '" ';
+        }
+
+        $dues = $this->general_model->custom_query("
+        SELECT 
+            h.*, 
+            r.*, 
+            CONCAT(h.fname, ' ', h.mname, ' ', h.lname) as fullname,
+            COALESCE(r.penalty, 0) + r.paid_amount as total_amount
+        FROM 
+            tbl_records r
+            JOIN tbl_homeowner h ON h.id_ho = r.id_ho 
+        WHERE 
+            r.status_record != 'archived' 
+            AND r.month_record = '" . $month . "' 
+            AND r.year_record = '" . $year . "'" . $status_where);
+
+
+        $all_paid = $this->general_model->custom_query('
+    SELECT COUNT(r.id_record) as paid
+    FROM tbl_records r, tbl_homeowner h
+    WHERE r.status_record != "archived" AND h.id_ho = r.id_ho AND r.year_record = ' . $year . ' AND r.month_record = "' . $month . '" AND r.status_record = "paid" ');
+        $all_unpaid = $this->general_model->custom_query('
+    SELECT COUNT(r.id_record) as unpaid
+    FROM tbl_records r, tbl_homeowner h
+    WHERE r.status_record != "archived" AND h.id_ho = r.id_ho AND r.year_record = ' . $year . ' AND r.month_record = "' . $month . '" AND r.status_record = "pending" ');
+
+        $all_dues = $this->general_model->custom_query('
+    SELECT COUNT(r.id_record) as paid_unpaid
+    FROM tbl_records r, tbl_homeowner h
+    WHERE r.status_record != "archived" AND h.id_ho = r.id_ho AND r.year_record = ' . $year . ' AND r.month_record = "' . $month . '"');
+
+        $this->load->library('PHPExcel', null, 'excel');
+        // for ($sheet_loop = 0; $sheet_loop < 1; $sheet_loop++) {
+        // $this->excel->createSheet(1);
+        // }
+        // ----------------------------------- Dues
+        $this->excel->setActiveSheetIndex(0);
+        $this->excel->getActiveSheet()->setTitle('Homeowners');
+        $this->excel->getActiveSheet()->setShowGridlines(false);
+        $header_condition = [
+            ['col' => 'A', 'id' => 'A7', 'title' => 'LAST NAME', 'width' => 20, 'data_id' => 'lname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'B', 'id' => 'B7', 'title' => 'FIRST NAME', 'width' => 20, 'data_id' => 'fname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'C', 'id' => 'C7', 'title' => 'MIDDLE NAME', 'width' => 20, 'data_id' => 'mname', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER],
+            ['col' => 'D', 'id' => 'D7', 'title' => 'BLOCK', 'width' => 10, 'data_id' => 'block', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER],
+            ['col' => 'E', 'id' => 'E7', 'title' => 'LOT', 'width' => 10, 'data_id' => 'lot', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'F', 'id' => 'F7', 'title' => 'VILLAGE', 'width' => 15, 'data_id' => 'village', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'G', 'id' => 'G7', 'title' => 'MONTH DUE', 'width' => 20, 'data_id' => 'month_record', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'H', 'id' => 'H7', 'title' => 'YEAR DUE', 'width' => 10, 'data_id' => 'year_record', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'I', 'id' => 'I7', 'title' => 'PAYMENT', 'width' => 15, 'data_id' => 'paid_amount', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'J', 'id' => 'J7', 'title' => 'PENALTY', 'width' => 15, 'data_id' => 'penalty', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'K', 'id' => 'K7', 'title' => 'TOTAL PAYMENT', 'width' => 20, 'data_id' => 'total_amount', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+            ['col' => 'L', 'id' => 'L7', 'title' => 'STATUS', 'width' => 10, 'data_id' => 'status_record', 'position' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT],
+
+        ];
+        $this->excel->getActiveSheet()->setCellValue('B2', "HOASYS HOMEOWNER DUES");
+        $this->excel->getActiveSheet()->setCellValue('B3', "TOTAL HOMEOWNERS DUES: " . $all_dues[0]->paid_unpaid);
+        $this->excel->getActiveSheet()->setCellValue('B4', "TOTAL HOMEOWNERS PAID: " . $all_paid[0]->paid);
+        $this->excel->getActiveSheet()->setCellValue('B5', "TOTAL HOMEOWNERS UNPAID: " . $all_unpaid[0]->unpaid);
+        $this->excel->getActiveSheet()->getStyle('B2:B2')->getFont()->setSize(20);
+        // var_dump($header_condition);
+        // exit();
+        for ($excel_data_header_loop = 0; $excel_data_header_loop < count($header_condition); $excel_data_header_loop++) {
+            $this->excel->getActiveSheet()->setCellValue($header_condition[$excel_data_header_loop]['id'], $header_condition[$excel_data_header_loop]['title']);
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFont()->setBold(true);
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFont()->getColor()->setRGB('FFFFFF');
+            $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+            if ($header_condition[$excel_data_header_loop]['id'] != "D2") {
+                $this->excel->getActiveSheet()->getStyle($header_condition[$excel_data_header_loop]['id'])->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('404040');
+            }
+            if ($header_condition[$excel_data_header_loop]['width'] > 0) {
+                $this->excel->getActiveSheet()->getColumnDimension($header_condition[$excel_data_header_loop]['col'])->setWidth($header_condition[$excel_data_header_loop]['width']);
+            }
+        }
+        $this->excel->getActiveSheet()->getStyle('D2:D2')->getFont()->setSize(20);
+        $this->excel->getActiveSheet()->getStyle('D2:D3')->getFont()->getColor()->setRGB('000000');
+        // $this->excel->getActiveSheet()->freezePane('E6');
+        $rowNum = 8;
+        $last_row = (count($dues) + $rowNum) - 1;
+        if (count($dues) > 0) {
+            foreach ($dues as $condition_rows) {
+                for ($loop_header = 0; $loop_header < count($header_condition); $loop_header++) {
+                    $this->excel->getActiveSheet()->setCellValue($header_condition[$loop_header]['col'] . $rowNum, $condition_rows->{$header_condition[$loop_header]['data_id']});
+                    $this->excel->getActiveSheet()->getStyle($header_condition[$loop_header]['col'] . $rowNum . ":" . $header_condition[$loop_header]['col'] . $rowNum)->getAlignment()->setHorizontal($header_condition[$loop_header]['position']);
+                }
+                $rowNum++;
+            }
+        }
+        $this->excel->getActiveSheet()->getStyle('A7:L7' . $this->excel->getActiveSheet()->getHighestRow())->applyFromArray(
+            array(
+                'borders' => array(
+                    'allborders' => array(
+                        'style' => PHPExcel_Style_Border::BORDER_THIN,
+                        'color' => array('rgb' => 'DDDDDD'),
+                    ),
+                ),
+            )
+        );
+
+        $this->excel->getActiveSheet()->getProtection()->setPassword('password hoa_sys');
+        $this->excel->getActiveSheet()->getProtection()->setSheet(true);
+        $dateTime = $this->get_current_date_time();
+        $filename = 'HOASYS_REPORT' . $dateTime['dateTime'] . '.xlsx'; //save our workbook as this file name
+        header('Content-Type: application/vnd.ms-excel'); //mime type
+        header('Content-Disposition: attachment;filename="' . $filename . '"'); //tell browser what's the file name
+        header('Cache-Control: max-age=0'); //no cache
+        // header('Set-Cookie: fileDownload=true; path=/');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        ob_end_clean();
+        $objWriter->save('php://output');
+        // Yes export 
+    }
+    public function email_sending_billing($email_to, $subject, $email)
+    {
+        $this->load->library('email');
+        $ser = 'http://' . $_SERVER['SERVER_NAME'];
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'ssl://smtp.gmail.com',
+            'smtp_timeout' => 30,
+            'smtp_port' => 465,
+            'smtp_user' => 'ggn1cdo@gmail.com',
+            'smtp_pass' => 'asklaymjpayxhkyi',
+            'charset' => 'utf-8',
+            'mailtype' => 'html',
+            'newline' => '\r\n'
+        );
+        $message = $email;
+        $this->email->initialize($config);
+        $this->email->set_newline("\r\n");
+        $this->email->set_crlf("\r\n");
+        $this->email->from("ggn1cdo@gmail.com");
+        $this->email->to($email_to);
+        $this->email->subject($subject);
+        $this->email->message($message);
+        if ($this->email->send()) {
+            echo "Mail successful";
+        } else {
+            echo "Sorry";
+            print_r($this->email->print_debugger());
+        }
     }
 }

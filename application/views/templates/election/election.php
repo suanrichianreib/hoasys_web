@@ -56,9 +56,16 @@
                     </div>
                 </div>
                 <div class="m-portlet__head-tools">
+                    <!-- <button type="button" id="open_test" class="btn btn-primary btn-icon"><i class="fa fa-remove"></i>
+                        <span>Open </span></button> -->
                 </div>
             </div>
             <div class="m-portlet__body">
+                <div class="m-portlet">
+                    <div id="ongoing_elections_list" class="m-portlet__body  m-portlet__body--no-padding">
+
+                    </div>
+                </div>
             </div>
         </div>
         <div class="m-portlet">
@@ -130,8 +137,8 @@
         </div>
     </div>
 </form>
-<form id="submit_concern_details" method="post">
-    <div class="modal fade" id="concern_details" data-id="0" tabindex="-1" role="dialog"
+<form id="submit_election_details_ongoing" method="post">
+    <div class="modal fade" id="election_details_ongoing" data-id="0" tabindex="-1" role="dialog"
         aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" style="max-width: 800px" role="document">
             <div class="modal-content">
@@ -139,41 +146,13 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <div style="margin: 0 20px">
-                        <div class="form-group m-form__group row">
-                            <div style="margin: 20px auto;">
-                                <h3 style="text-align: center!important;">Concern #<span
-                                        id="concern_id_display">#00001</span></h3>
-                                <h5 style="text-align: center!important;" class="text-muted" id="subheader"></h5>
+                    <div class="m-portlet__body">
+                        <div class="m-portlet">
+                            <div id="result-container" class="m-portlet__body  m-portlet__body--no-padding">
+
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-xl-6">
-                                <label class="m--font-bolder">Concern Title: </label>
-                                <span id="concern_title_display">This is a sample Title</span>
-                            </div>
-                            <div class="col-xl-6">
-                                <label class="m--font-bolder">Date Sent: </label>
-                                <span id="concern_date_display">2023-05-7 7:00pm</span>
-                            </div>
-                            <div class="col-xl-6">
-                                <label class="m--font-bolder">Sender: </label>
-                                <span id="concern_sender_display">Joshua Quijada</span>
-                            </div>
-                            <div class="col-xl-6">
-                                <label class="m--font-bolder">Status: </label>
-                                <span id="concern_status_display">Unpublished</span>
-                            </div>
-                            <div class="col-12">
-                                <label class="m--font-bolder">Concern Description: </label>
-                                <p id="concern_desc_display">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                                    veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                                    consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-                                    dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-                                    sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -187,5 +166,33 @@
         </div>
     </div>
 </form>
-<script src="<?php echo base_url() ?>assets/src/custom/js/concerns/concerns.js?<?php echo $date_time; ?>">
+<form id="submit_balot" method="post">
+    <div class="modal fade" id="election_details_ongoing_balot" data-id="0" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="max-width: 800px" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div class="m-portlet__body">
+                        <div class="text-center"><h4>OFFICIAL BALLOT</h4></div>
+                        <div class="m-portlet">
+                            <div id="result-container-balot" class="m-portlet__body  m-portlet__body--no-padding">
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-metal" data-dismiss="modal">Close</button>&nbsp;
+                    <button type="button" id="submit_balot_btn" class="btn btn-success btn-icon"><i
+                            class="fa fa-check"></i> <span>Submit Balot</span></button>&nbsp;
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script src="<?php echo base_url() ?>assets/src/custom/js/election/election.js?<?php echo $date_time; ?>">
 </script>

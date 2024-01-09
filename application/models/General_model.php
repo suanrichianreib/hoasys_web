@@ -387,4 +387,25 @@ class General_model extends CI_Model
         $query = $this->db->get();
         return $query->result();
     }
+    // Voting 
+    public function updateTotalScore($candidateIds) {
+        foreach ($candidateIds as $candidateId) {
+            $this->db->set('total_score', 'total_score + 1', FALSE);
+            $this->db->where('id_elect_cand', $candidateId);
+            $this->db->update('tbl_election_candidates');
+        }
+    }
+
+    public function saveBallot($voterId, $electionId, $positionCheckedCounts) {
+        foreach ($positionCheckedCounts as $position => $data) {
+            $dataToInsert = array(
+                'id_ho_voter' => $voterId,
+                'id_elect' => $electionId,
+                'election_pos_add_id' => $data['position_election_added_id'],
+                'election_pos_id' => $data['election_pos_id'],
+                'num_votes' => $data['count']
+            );
+            $this->db->insert('tbl_votes', $dataToInsert);
+        }
+    }
 }

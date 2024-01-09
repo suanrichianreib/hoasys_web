@@ -101,6 +101,8 @@ function loadMoreContent() {
 			} else {
 				// No more records, hide the load more button
 				$("#loadMoreBtn").hide();
+				let norecords = '<div class="text-center mt-5"><h3 style="color: #ada9e7;">No Records To Load</h3></div>';
+				$(".list_forums").append(norecords);
 			}
 		},
 		error: function (xhr, status, error) {

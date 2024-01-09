@@ -481,11 +481,13 @@ function get_details_dues_per_homeowner(id, record_id) {
 			// status
 			if (result[0].status_record == "paid") {
 				$("#set_to_paid").hide();
+				$("#send_billing_btn").hide();
 				$("#revert_to_pending").show();
 				$("#delete_record").hide();
 				$("#penalty_record").hide();
 			} else {
 				$("#set_to_paid").show();
+				$("#send_billing_btn").show();
 				$("#revert_to_pending").hide();
 				$("#delete_record").show();
 				$("#penalty_record").show();
@@ -675,6 +677,7 @@ $("#set_to_paid").on("click", function () {
 			// get_details_dues_per_homeowner(ho_id, record_id);
 			update_status_record(ho_id, record_id, "paid");
 			$("#set_to_paid").hide();
+			$("#send_billing_btn").hide();
 			$("#revert_to_pending").show();
 		} else if (result.dismiss === "cancel") {
 			toastr.error("Action Cancelled.");
@@ -780,4 +783,98 @@ $("#save_penalty").on("click", function () {
 			},
 		});
 	}
+});
+$("#send_billing_btn").on("click", function () {
+	let record_id = $("#view_payment_records_modal").data("rec");
+	let ho_id = $("#view_payment_records_modal").data("ho");
+	swal({
+		title: "Are you sure you want to send your billing reminder?",
+		text: "The homeowner will receive via email.",
+		type: "question",
+		showCancelButton: true,
+		confirmButtonText: "Yes",
+		cancelButtonText: `No`,
+	}).then((result) => {
+		if (result.value) {
+			send_billing_dues(record_id, ho_id);
+			$("#view_payment_records_modal").modal("hide");
+			toastr.success("Successfully sent billing reminder to the homeowner.");
+		} else if (result.dismiss === "cancel") {}
+	});
+});
+
+function send_billing_dues(record_id, ho_id) {
+	$("#loading-overlay").show();
+	$.ajax({
+		type: "POST",
+		url: `${base_url}/dues/send_billing_dues`,
+		data: {
+			record_id,
+			ho_id,
+		},
+		cache: false,
+		success: function (data) {
+			// $("#view_payment_records_modal").modal("hide");
+		},
+		complete: function () {
+			// Hide loading overlay after the AJAX call is completed
+			$("#loading-overlay").hide();
+		},
+	});
+}
+$("#download_dues_report").on("click", function () {
+
+	var todate = moment().format("DD-MM-YYYY HH:mm:ss");
+	var month = $("#month_select_choose").val();
+	var year = $("#year_select_choose").val();
+	var status = $("#status_pay").val();
+
+	if(month == "All" || year == "All"){
+		toastr.warning("Please select Month and Year when exporting Dues info.");
+	}else{
+		$.ajax({
+			url: `${base_url}/dues/download_dues_report`,
+			method: "POST",
+			data: {
+				month,
+				year,
+				status
+			},
+			beforeSend: function () {
+				mApp.block("body", {
+					overlayColor: "#000000",
+					type: "loader",
+					state: "brand",
+					size: "lg",
+					message: "Downloading...",
+				});
+			},
+			xhrFields: {
+				responseType: "blob",
+			},
+			success: function (data) {
+				console.log(data);
+				var a = document.createElement("a");
+				var url = window.URL.createObjectURL(data);
+				a.href = url;
+				a.download = "Hoasys-dues-report-" + todate +"-"+month +"-"+year +".xlsx";
+				a.click();
+				window.URL.revokeObjectURL(url);
+				mApp.unblock("body");
+			},
+			error: function (data) {
+				$.notify(
+					{
+						message: "No record to export / Error in exporting excel",
+					},
+					{
+						type: "danger",
+						timer: 1000,
+					}
+				);
+				mApp.unblock("body");
+			},
+		});
+	}
+
 });

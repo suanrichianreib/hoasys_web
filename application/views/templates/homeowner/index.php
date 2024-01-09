@@ -82,9 +82,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="col-xl-2">
-                                </div>
-                                <div class="col-xl-4" style="text-align:end">
+                                <div class="col-xl-5" style="text-align:end">
                                     <a id="addprize_btn" href="#"
                                         class="btn btn-primary m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill add_homeowner">
                                         <span>
@@ -92,6 +90,12 @@
                                             <span>Add Homeowner</span>
                                         </span>
                                     </a>
+                                </div>
+                                <div class="col-1" style="text-align:left">
+                                    <button type="button" id="download_homeowners_report"
+                                        class="btn btn-success m-btn m-btn--icon btn-lg m-btn--icon-only">
+                                        <i class="fa fa-download"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -377,7 +381,7 @@
                                         autocomplete="off" required>
                                 </div>
                             </div>
-							<div class="col-xl-6">
+                            <div class="col-xl-6">
                                 <div class="form-group">
                                     <label for="recipient-name" class="m--font-bolder">Status <span
                                             class="m--font-danger">*</span></label>

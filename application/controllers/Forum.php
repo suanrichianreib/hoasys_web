@@ -177,17 +177,34 @@ class Forum extends General
 				$where_sub = 'id_forum_rep IN ('.$sub_comments_string.')';
         		$this->general_model->delete_vals($where_sub, 'tbl_forum_replies');
 			}
+
+			// logs 
+			$comment_info = $this->general_model->custom_query('SELECT commented_by FROM `tbl_forum_replies` WHERE id_forum_rep ='.$id);
+			$admin_name = $this->session->userdata("fullname");
+			$message = $admin_name.' removed/deleted comment of '.$comment_info[0]->commented_by.' in Forum.';
+			$this->activity_log('forum',$id,$message);
+
 			// delete comments
 			$where_com = 'id_forum_rep ='.$id;
 			$this->general_model->delete_vals($where_com, 'tbl_forum_replies');
 		
 		// Respond with a JSON message
 		$response = array('message' => 'Forum saved updated');
+
+
 		echo json_encode($response);
 	}
 	public function delete_forum_sub_comment(){
         $id = $this->input->post('forum_comment_id');
 		$where_com  = "";
+
+		// logs 
+		$comment_info = $this->general_model->custom_query('SELECT commented_by FROM `tbl_forum_replies` WHERE id_forum_rep ='.$id);
+		$admin_name = $this->session->userdata("fullname");
+		$message = $admin_name.' removed/deleted sub-comment of '.$comment_info[0]->commented_by.' in Forum.';
+		$this->activity_log('forum',$id,$message);
+
+
 			// delete comments
 		$where_com = 'id_forum_rep ='.$id;
 		$this->general_model->delete_vals($where_com, 'tbl_forum_replies');

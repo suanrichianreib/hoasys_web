@@ -80,11 +80,11 @@ class Admin extends General
         ];
         echo json_encode(['meta' => $meta, 'data' => $data]);
     }
-
     public function admin_action()
     {
         $admin_ID = $this->input->post('admin_iD');
         $action = $this->input->post('action');
+        $admin_name = $this->session->userdata("fullname");
 
         $lname = $this->input->post('lname');
         $fname = $this->input->post('fname');
@@ -115,8 +115,17 @@ class Admin extends General
             $result = 'Admin already exist!';
         } else {
             if ($action === 'create') {
-                $result = $this->general_model->insert_vals($data, "tbl_admin");
+                //create admin
+                $result = 1;
+                $message = $admin_name.' successfully added '.$fname.' '.$lname.' as admin.';
+                $id_admin_last_insert = $this->general_model->insert_vals_last_inserted_id($data, "tbl_admin");
+                $this->activity_log('admin', $id_admin_last_insert,$message);
+
             } elseif ($action === 'update') {
+                //update admin
+                // $result = 1;
+                $message = $admin_name.' successfully updated admin '.$fname.' '.$lname.' info.';
+                $this->activity_log('admin',$admin_ID,$message);
                 $result = $this->general_model->update_vals($data, "id_admin = $admin_ID", "tbl_admin");
             } else {
                 $result = 0;
@@ -127,10 +136,14 @@ class Admin extends General
     }
     public function update_status_admin(){
         $admin_ID = $this->input->post('admin_id');
+        $admin_name = $this->session->userdata("fullname");
         $data = array(
             'status'     => $this->input->post('status')
         );
         $result = $this->general_model->update_vals($data, "id_admin = $admin_ID", "tbl_admin");
+        $name = $this->get_admin_fullname($admin_ID);
+        $message = $admin_name.' successfully set status of Admin '.$name[0]->fullname.' to '.$this->input->post('status').'.';
+        $this->activity_log('admin', $admin_ID,$message);
     }
     public function check_authorization(){
         $password = sha1(md5($this->input->post('pass')));
